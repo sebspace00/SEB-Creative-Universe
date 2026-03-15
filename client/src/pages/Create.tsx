@@ -27,7 +27,7 @@ const ARC_OPTIONS = [
 const TYPE_OPTIONS = ["track", "concept", "visual", "narrative", "character", "motif", "location"];
 
 export default function Create() {
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = true;
   const utils = trpc.useUtils();
 
   // New track form

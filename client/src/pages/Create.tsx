@@ -58,27 +58,7 @@ export default function Create() {
     onError: () => { toast.error("Failed to generate idea"); setAiLoading(false); },
   });
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
-            style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
-            <Sparkles size={28} className="text-[#c084fc]" />
-          </div>
-          <h2 className="font-display text-2xl font-bold text-white mb-3">Create Mode</h2>
-          <p className="text-white/40 text-sm leading-relaxed mb-6">
-            Sign in to add new tracks to the City Cycle universe, generate AI-powered mythology ideas, and expand the narrative.
-          </p>
-          <a href={getLoginUrl()}>
-            <Button className="w-full" style={{ background: "linear-gradient(135deg, #7c3aed, #00d4ff)", color: "white" }}>
-              Sign In to Create
-            </Button>
-          </a>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen p-6 lg:p-8">

@@ -82,7 +82,7 @@ const tracksRouter = router({
     }).from(tracks).groupBy(tracks.thematicCluster);
     return { total: total[0]?.count ?? 0, byDistrict, byArc, byCluster };
   }),
-  add: protectedProcedure
+  add: publicProcedure
     .input(z.object({
       title: z.string().min(1),
       description: z.string().optional(),
@@ -164,7 +164,7 @@ const connectionsRouter = router({
       );
     }),
 
-  create: protectedProcedure
+  create: publicProcedure
     .input(z.object({
       sourceId: z.number(),
       targetId: z.number(),
@@ -181,7 +181,7 @@ const connectionsRouter = router({
         connectionType: input.connectionType,
         strength: input.strength,
         label: input.label,
-        createdBy: ctx.user.id,
+        createdBy: 1,
       });
       return { success: true };
     }),
@@ -197,7 +197,7 @@ const notesRouter = router({
       return db.select().from(notes).where(eq(notes.trackId, input.trackId)).orderBy(desc(notes.createdAt));
     }),
 
-  create: protectedProcedure
+  create: publicProcedure
     .input(z.object({
       trackId: z.number(),
       content: z.string().min(1),
@@ -208,7 +208,7 @@ const notesRouter = router({
       if (!db) throw new Error("DB unavailable");
       await db.insert(notes).values({
         trackId: input.trackId,
-        userId: ctx.user.id,
+        userId: 1,
         content: input.content,
         noteType: input.noteType,
       });
@@ -310,7 +310,7 @@ Generate a rich, poetic mythology entry (300-500 words) that:
         entryType: "analysis",
         relatedTrackIds: input.trackIds,
         generatedByAI: true,
-        userId: ctx.user.id,
+        userId: 1,
       });
 
       return { title, content };

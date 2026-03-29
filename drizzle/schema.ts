@@ -57,6 +57,7 @@ export const tracks = mysqlTable("tracks", {
   narrativePotential: text("narrativePotential"),
   creativeStatus: mysqlEnum("creativeStatus", ["concept", "developed", "produced"]).default("concept").notNull(),
   type: mysqlEnum("type", ["song", "visual", "narrative", "philosophical", "cinematic", "performance"]).default("song").notNull(),
+  lyrics: text("lyrics"),
   isBlank: boolean("isBlank").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

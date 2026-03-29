@@ -39,6 +39,7 @@ export default function TrackDetail() {
       toast.success("Note added");
     },
     onError: () => toast.error("Failed to add note"),
+    });
     const updateTrack = trpc.tracks.update.useMutation({
     onSuccess: () => {
       utils.tracks.byId.invalidate({ id: trackId });

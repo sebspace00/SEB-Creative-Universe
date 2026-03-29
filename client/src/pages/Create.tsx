@@ -24,7 +24,7 @@ const ARC_OPTIONS = [
   { value: "Myth", color: "#f0c040" },
 ];
 
-const TYPE_OPTIONS = ["track", "concept", "visual", "narrative", "character", "motif", "location"];
+const TYPE_OPTIONS = ["song", "visual", "narrative", "philosophical", "cinematic", "performance"];
 
 export default function Create() {
   const isAuthenticated = true;

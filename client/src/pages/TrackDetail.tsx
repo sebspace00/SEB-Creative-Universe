@@ -8,30 +8,30 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-
+ 
 const DISTRICT_NAMES: Record<number, string> = { 1: "The Shadows", 2: "The Stage", 3: "The Riot", 4: "The Myth District" };
 const DISTRICT_COLORS: Record<number, string> = { 1: "#c084fc", 2: "#00d4ff", 3: "#ff6b6b", 4: "#f0c040" };
 const ARC_COLORS: Record<string, string> = { "Invisible": "#c084fc", "Performer": "#00d4ff", "Rebel": "#ff6b6b", "Myth": "#f0c040" };
 const NOTE_TYPE_COLORS: Record<string, string> = { interpretation: "#00d4ff", connection: "#c084fc", expansion: "#f0c040", question: "#ff6b6b" };
-
+ 
 export default function TrackDetail() {
   const params = useParams<{ id: string }>();
   const trackId = parseInt(params.id ?? "0");
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
-
+ 
   const [noteContent, setNoteContent] = useState("");
+  const [noteType, setNoteType] = useState<"interpretation" | "connection" | "expansion" | "question">("interpretation");
   const [editingDesc, setEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState("");
   const [editingLyrics, setEditingLyrics] = useState(false);
   const [lyricsValue, setLyricsValue] = useState("");
-  const [noteType, setNoteType] = useState<"interpretation" | "connection" | "expansion" | "question">("interpretation");
-
+ 
   const { data: track, isLoading } = trpc.tracks.byId.useQuery({ id: trackId }, { enabled: !!trackId });
   const { data: notes } = trpc.notes.forTrack.useQuery({ trackId }, { enabled: !!trackId });
   const { data: connections } = trpc.connections.forTrack.useQuery({ trackId }, { enabled: !!trackId });
   const { data: allTracks } = trpc.tracks.list.useQuery({ limit: 174, offset: 0 });
-
+ 
   const createNote = trpc.notes.create.useMutation({
     onSuccess: () => {
       setNoteContent("");
@@ -39,8 +39,9 @@ export default function TrackDetail() {
       toast.success("Note added");
     },
     onError: () => toast.error("Failed to add note"),
-    });
-    const updateTrack = trpc.tracks.update.useMutation({
+  });
+ 
+  const updateTrack = trpc.tracks.update.useMutation({
     onSuccess: () => {
       utils.tracks.byId.invalidate({ id: trackId });
       setEditingDesc(false);
@@ -49,15 +50,14 @@ export default function TrackDetail() {
     },
     onError: () => toast.error("Failed to save"),
   });
-  });
-
+ 
   const deleteNote = trpc.notes.delete.useMutation({
     onSuccess: () => {
       utils.notes.forTrack.invalidate({ trackId });
       toast.success("Note deleted");
     },
   });
-
+ 
   if (isLoading) {
     return (
       <div className="p-8 space-y-4">
@@ -67,7 +67,7 @@ export default function TrackDetail() {
       </div>
     );
   }
-
+ 
   if (!track) {
     return (
       <div className="p-8 text-center text-white/40">
@@ -76,28 +76,25 @@ export default function TrackDetail() {
       </div>
     );
   }
-
+ 
   const distColor = DISTRICT_COLORS[track.districtId ?? 0] ?? "#ffffff";
   const arcColor = ARC_COLORS[track.narrativeArc ?? ""] ?? "#ffffff";
-
-  // Find connected tracks
+ 
   const connectedTrackIds = new Set<number>();
   for (const c of connections ?? []) {
     if (c.sourceId === trackId) connectedTrackIds.add(c.targetId);
     if (c.targetId === trackId) connectedTrackIds.add(c.sourceId);
   }
   const connectedTracks = (allTracks?.tracks ?? []).filter(t => connectedTrackIds.has(t.id));
-
+ 
   return (
     <div className="min-h-screen p-6 lg:p-8 max-w-4xl">
-      {/* Back */}
       <Link href="/archive">
         <button className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors mb-8">
           <ArrowLeft size={14} /> Archive
         </button>
       </Link>
-
-      {/* Track header */}
+ 
       <div className="p-8 rounded-2xl mb-8"
         style={{ background: `linear-gradient(135deg, ${distColor}08, rgba(255,255,255,0.01))`, border: `1px solid ${distColor}20` }}>
         <div className="flex items-start justify-between mb-4">
@@ -114,11 +111,11 @@ export default function TrackDetail() {
           </div>
           <span className="text-xs text-white/25 capitalize">{track.type}</span>
         </div>
-
+ 
         <h1 className="font-display text-4xl font-bold text-white leading-tight mb-4">{track.title}</h1>
-
+ 
         {/* Editable Description */}
-        <div className="mb-2">
+        <div className="mb-4">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[9px] text-white/25 tracking-widest uppercase">Description</span>
             {!editingDesc && (
@@ -152,7 +149,7 @@ export default function TrackDetail() {
             </p>
           )}
         </div>
-
+ 
         {/* Editable Lyrics */}
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-1">
@@ -189,9 +186,8 @@ export default function TrackDetail() {
           )}
         </div>
       </div>
-
+ 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Metadata */}
         <div className="lg:col-span-2 space-y-4">
           {track.narrativePotential && (
             <div className="p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -199,53 +195,42 @@ export default function TrackDetail() {
               <p className="text-sm text-white/55 leading-relaxed">{track.narrativePotential}</p>
             </div>
           )}
-
           {Array.isArray(track.themes) && (track.themes as string[]).length > 0 && (
             <div className="p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="text-[9px] text-white/25 tracking-widest uppercase mb-3">Themes</div>
               <div className="flex flex-wrap gap-2">
                 {(track.themes as string[]).map((t: string) => (
                   <span key={t} className="text-xs px-2.5 py-1 rounded-full text-white/55"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    {t}
-                  </span>
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>{t}</span>
                 ))}
               </div>
             </div>
           )}
-
           {Array.isArray(track.symbolicElements) && (track.symbolicElements as string[]).length > 0 && (
             <div className="p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="text-[9px] text-white/25 tracking-widest uppercase mb-3">Symbolic Elements</div>
               <div className="flex flex-wrap gap-2">
                 {(track.symbolicElements as string[]).map((s: string) => (
                   <span key={s} className="text-xs px-2.5 py-1 rounded-full"
-                    style={{ color: distColor, background: `${distColor}10`, border: `1px solid ${distColor}20` }}>
-                    {s}
-                  </span>
+                    style={{ color: distColor, background: `${distColor}10`, border: `1px solid ${distColor}20` }}>{s}</span>
                 ))}
               </div>
             </div>
           )}
-
           {Array.isArray(track.culturalReferences) && (track.culturalReferences as string[]).length > 0 && (
             <div className="p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="text-[9px] text-white/25 tracking-widest uppercase mb-3">Cultural References</div>
               <div className="flex flex-wrap gap-2">
                 {(track.culturalReferences as string[]).map((r: string) => (
                   <span key={r} className="text-xs px-2.5 py-1 rounded-full text-white/45"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    {r}
-                  </span>
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>{r}</span>
                 ))}
               </div>
             </div>
           )}
         </div>
-
-        {/* Sidebar */}
+ 
         <div className="space-y-4">
-          {/* Quick facts */}
           <div className="p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="text-[9px] text-white/25 tracking-widest uppercase mb-3">Details</div>
             <div className="space-y-2 text-xs">
@@ -263,25 +248,20 @@ export default function TrackDetail() {
               ))}
             </div>
           </div>
-
-          {/* Emotional tags */}
           {Array.isArray(track.emotionalTags) && (track.emotionalTags as string[]).length > 0 && (
             <div className="p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="text-[9px] text-white/25 tracking-widest uppercase mb-3">Emotional Tags</div>
               <div className="flex flex-wrap gap-1.5">
                 {(track.emotionalTags as string[]).map((tag: string) => (
                   <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full text-white/40"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    {tag}
-                  </span>
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>{tag}</span>
                 ))}
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Connected tracks */}
+ 
       {connectedTracks.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
@@ -305,16 +285,14 @@ export default function TrackDetail() {
           </div>
         </div>
       )}
-
-      {/* Notes / Collaboration */}
+ 
       <div>
         <div className="flex items-center gap-2 mb-4">
           <MessageSquare size={14} className="text-white/30" />
           <span className="text-xs text-white/30 tracking-widest uppercase">Collaborative Notes</span>
           <span className="text-xs text-white/20">({notes?.length ?? 0})</span>
         </div>
-
-        {/* Add note */}
+ 
         {isAuthenticated ? (
           <div className="p-5 rounded-xl mb-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
             <Textarea
@@ -353,8 +331,7 @@ export default function TrackDetail() {
             <a href={getLoginUrl()} className="text-[#00d4ff] hover:underline">Sign in</a> to add collaborative notes
           </div>
         )}
-
-        {/* Notes list */}
+ 
         <div className="space-y-3">
           {(notes ?? []).map(note => {
             const typeColor = NOTE_TYPE_COLORS[note.noteType] ?? "#ffffff";
@@ -367,14 +344,10 @@ export default function TrackDetail() {
                     {note.noteType}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-white/20">
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </span>
+                    <span className="text-[9px] text-white/20">{new Date(note.createdAt).toLocaleDateString()}</span>
                     {isAuthenticated && user?.id === note.userId && (
-                      <button
-                        onClick={() => deleteNote.mutate({ id: note.id })}
-                        className="text-white/20 hover:text-[#ff6b6b] transition-colors"
-                      >
+                      <button onClick={() => deleteNote.mutate({ id: note.id })}
+                        className="text-white/20 hover:text-[#ff6b6b] transition-colors">
                         <Trash2 size={11} />
                       </button>
                     )}

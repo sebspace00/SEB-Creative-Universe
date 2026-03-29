@@ -82,6 +82,21 @@ const tracksRouter = router({
     }).from(tracks).groupBy(tracks.thematicCluster);
     return { total: total[0]?.count ?? 0, byDistrict, byArc, byCluster };
   }),
+  update: publicProcedure
+    .input(z.object({
+      id: z.number(),
+      description: z.string().optional(),
+      lyrics: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB unavailable");
+      await db.update(tracks).set({
+        description: input.description ?? null,
+        lyrics: input.lyrics ?? null,
+      }).where(eq(tracks.id, input.id));
+      return { success: true };
+    }),
   add: publicProcedure
     .input(z.object({
       title: z.string().min(1),

@@ -3,7 +3,7 @@ import { Link, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ArrowLeft, MessageSquare, Plus, Trash2, GitBranch } from "lucide-react";
+import { ArrowLeft, MessageSquare, Plus, Trash2, GitBranch, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,10 @@ export default function TrackDetail() {
   const utils = trpc.useUtils();
 
   const [noteContent, setNoteContent] = useState("");
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState("");
+  const [editingLyrics, setEditingLyrics] = useState(false);
+  const [lyricsValue, setLyricsValue] = useState("");
   const [noteType, setNoteType] = useState<"interpretation" | "connection" | "expansion" | "question">("interpretation");
 
   const { data: track, isLoading } = trpc.tracks.byId.useQuery({ id: trackId }, { enabled: !!trackId });
@@ -35,6 +39,15 @@ export default function TrackDetail() {
       toast.success("Note added");
     },
     onError: () => toast.error("Failed to add note"),
+    const updateTrack = trpc.tracks.update.useMutation({
+    onSuccess: () => {
+      utils.tracks.byId.invalidate({ id: trackId });
+      setEditingDesc(false);
+      setEditingLyrics(false);
+      toast.success("Saved");
+    },
+    onError: () => toast.error("Failed to save"),
+  });
   });
 
   const deleteNote = trpc.notes.delete.useMutation({
@@ -103,9 +116,77 @@ export default function TrackDetail() {
 
         <h1 className="font-display text-4xl font-bold text-white leading-tight mb-4">{track.title}</h1>
 
-        {track.description && (
-          <p className="text-white/55 leading-relaxed text-sm">{track.description}</p>
-        )}
+        {/* Editable Description */}
+        <div className="mb-2">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[9px] text-white/25 tracking-widest uppercase">Description</span>
+            {!editingDesc && (
+              <button onClick={() => { setDescValue(track.description ?? ""); setEditingDesc(true); }}
+                className="text-white/20 hover:text-white/50 transition-colors">
+                <Pencil size={10} />
+              </button>
+            )}
+          </div>
+          {editingDesc ? (
+            <div className="space-y-2">
+              <Textarea value={descValue} onChange={(e) => setDescValue(e.target.value)}
+                className="bg-white/[0.04] border-white/[0.08] text-white text-sm resize-none"
+                rows={4} placeholder="Describe this track..." autoFocus />
+              <div className="flex gap-2">
+                <button onClick={() => updateTrack.mutate({ id: trackId, description: descValue, lyrics: (track as any).lyrics ?? undefined })}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg text-[#00d4ff]"
+                  style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.25)" }}>
+                  <Check size={11} /> Save
+                </button>
+                <button onClick={() => setEditingDesc(false)}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg text-white/40"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <X size={11} /> Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-white/55 leading-relaxed text-sm">
+              {track.description || <span className="text-white/20 italic">No description yet — click ✏️ to add one</span>}
+            </p>
+          )}
+        </div>
+
+        {/* Editable Lyrics */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[9px] text-white/25 tracking-widest uppercase">Lyrics</span>
+            {!editingLyrics && (
+              <button onClick={() => { setLyricsValue((track as any).lyrics ?? ""); setEditingLyrics(true); }}
+                className="text-white/20 hover:text-white/50 transition-colors">
+                <Pencil size={10} />
+              </button>
+            )}
+          </div>
+          {editingLyrics ? (
+            <div className="space-y-2">
+              <Textarea value={lyricsValue} onChange={(e) => setLyricsValue(e.target.value)}
+                className="bg-white/[0.04] border-white/[0.08] text-white text-sm font-mono resize-none"
+                rows={10} placeholder="Paste or write the lyrics here..." autoFocus />
+              <div className="flex gap-2">
+                <button onClick={() => updateTrack.mutate({ id: trackId, description: track.description ?? undefined, lyrics: lyricsValue })}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg text-[#00d4ff]"
+                  style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.25)" }}>
+                  <Check size={11} /> Save
+                </button>
+                <button onClick={() => setEditingLyrics(false)}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg text-white/40"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <X size={11} /> Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-white/55 leading-relaxed whitespace-pre-wrap font-mono">
+              {(track as any).lyrics || <span className="text-white/20 italic font-sans">No lyrics yet — click ✏️ to add</span>}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

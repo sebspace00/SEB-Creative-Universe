@@ -31,3 +31,4 @@
 - [x] Mobile responsiveness
 - [x] Write vitest tests (23 tests passing)
 - [x] Save checkpoint and deliver
+<!-- deploy trigger -->
